@@ -54,13 +54,17 @@ namespace Zulu.API.DAL
 
         private Models.COMPROBANTES GetModelComprobante(AjusteStock stock)
         {
+            var _id_TipoComprobante = 78;
             var _prefijo = this.GetPrefijoComprobante(stock.FN_pfac_id);
             var _idComprobante= new DAL.UtilsDB().GenerarId("COMPROBANTES");
+            var _nroComprobante = new DAL.UtilsDB().GenerarNroComprobante(stock.FN_pfac_id , _id_TipoComprobante );
+
             var _ajusteStk = new Models.COMPROBANTES
             {
                 NroComprobanteSucursal = 0,
+                NroComprobante= _nroComprobante,
                 Domicilio = "",
-                Id_TipoComprobante = 78,
+                Id_TipoComprobante = _id_TipoComprobante,
                 id_persona = 0,
                 RazonSocial = "",
                 CondicionIVA = 0,

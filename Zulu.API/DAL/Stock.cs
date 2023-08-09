@@ -29,15 +29,20 @@ namespace Zulu.API.DAL
 
         }
 
-        private int GetPrefijoComprobante(int pfac_id)
+        private RecordDataFacturacion GetDataPuntoFacturacion(int pfac_id)
         {
 
             using (var context = new ZuluContext())
             {
-                return context.SUC_PUNTOFACTURACION
+
+                var _retorno = context.SUC_PUNTOFACTURACION
                                         .Where(p => p.pfac_id == pfac_id)
-                                        .Select(p => p.pfac_prefijo_comprobante)
+                                        .Select(p => new {p.id_sucursal,
+                                                          p.pfac_prefijo_comprobante})
                                         .FirstOrDefault();
+
+                return new RecordDataFacturacion(_retorno.id_sucursal, _retorno.pfac_prefijo_comprobante);
+
             }
         }
 
@@ -55,17 +60,24 @@ namespace Zulu.API.DAL
         private Models.COMPROBANTES GetModelComprobante(AjusteStock stock)
         {
             var _id_TipoComprobante = 78;
-            var _prefijo = this.GetPrefijoComprobante(stock.FN_pfac_id);
+            var _dataPtoFacturacion= this.GetDataPuntoFacturacion(stock.FN_pfac_id);
             var _idComprobante= new DAL.UtilsDB().GenerarId("COMPROBANTES");
             var _nroComprobante = new DAL.UtilsDB().GenerarNroComprobante(stock.FN_pfac_id , _id_TipoComprobante );
 
             var _ajusteStk = new Models.COMPROBANTES
             {
-                NroComprobanteSucursal = 0,
-                NroComprobante= _nroComprobante,
+                NroComprobanteSucursal = _dataPtoFacturacion.pfac_prefijo_comprobante,
+                NroComprobante = _nroComprobante,
                 Domicilio = "",
+                FechaComprobante = DateTime.Now.Date, 
                 Id_TipoComprobante = _id_TipoComprobante,
                 id_persona = 0,
+                id_Sucursal=0,
+                id_asientocontable=null,
+                id_planCuentas = null,
+                LegajoSucursal = "0",
+                cmp_codigobarras = null,
+                id_localidad = null,
                 RazonSocial = "",
                 CondicionIVA = 0,
                 CUIT_CUIL = "",
@@ -99,10 +111,8 @@ namespace Zulu.API.DAL
                 Impuesto2 = 0,
                 Impuesto3 = 0,
                 Estado = 0,
-                Observacion = "",
-                Fecha_alta = DateTime.Now,
-                id_asientocontable = 0,
-                id_planCuentas = 0,
+                Observacion = "Movimiento de stock automatico de planta de producción a deposito " + 
+                           DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
                 SaleLibroIVA = 0,
                 Habilitada = 0,
                 ObservacionHabilitacion = "",
@@ -113,7 +123,7 @@ namespace Zulu.API.DAL
 
             _ajusteStk.id = _idComprobante;
             _ajusteStk.FechaComprobante = stock.FechaComprobante;
-            _ajusteStk.Prefijo = _prefijo;
+            _ajusteStk.Prefijo = _dataPtoFacturacion.id_sucursal;
             _ajusteStk.id_usuario = stock.idUsuario;
             _ajusteStk.pfac_id = stock.FN_pfac_id;
 
@@ -124,7 +134,7 @@ namespace Zulu.API.DAL
             {
                 var _item = this.GetItem(itemDetalle.codigoItem);
 
-                var _compDetalle = GetModelComprobanteDetalle(itemDetalle, _renglon, _prefijo, _item);
+                var _compDetalle = GetModelComprobanteDetalle(itemDetalle, _renglon, _dataPtoFacturacion.id_sucursal, _item);
                 var _idComprobanteDetalle = new DAL.UtilsDB().GenerarId("COMPROBANTESDETALLES");
                 var _movimStk= this.GetModelMovimientoStock(itemDetalle, _item);
 
@@ -255,5 +265,18 @@ namespace Zulu.API.DAL
 
         }
 
+    }
+
+    internal record struct RecordDataFacturacion(int id_sucursal, int pfac_prefijo_comprobante)
+    {
+        public static implicit operator (int id_sucursal, int pfac_prefijo_comprobante)(RecordDataFacturacion value)
+        {
+            return (value.id_sucursal, value.pfac_prefijo_comprobante);
+        }
+
+        public static implicit operator RecordDataFacturacion((int id_sucursal, int pfac_prefijo_comprobante) value)
+        {
+            return new RecordDataFacturacion(value.id_sucursal, value.pfac_prefijo_comprobante);
+        }
     }
 }

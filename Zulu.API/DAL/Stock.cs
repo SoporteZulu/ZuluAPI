@@ -125,6 +125,7 @@ namespace Zulu.API.DAL
                 var _movimStk= this.GetModelMovimientoStock(itemDetalle, _item);
 
                 _compDetalle.id = _idComprobanteDetalle;
+                _compDetalle.cpri_id = 5;
                 _ajusteStk.COMPROBANTESDETALLES.Add(_compDetalle);
                 _ajusteStk.MOVIMIENTOSTOCK.Add(_movimStk);
 

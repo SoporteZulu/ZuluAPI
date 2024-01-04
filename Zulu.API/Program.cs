@@ -12,20 +12,20 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddControllers();
 
-builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Host.UseSerilog(); 
+//builder.Host.UseSerilog(); 
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseSerilogRequestLogging();
-app.UseAuthorization();
+//app.UseSerilogRequestLogging();
+//app.UseAuthorization();
 
 app.MapControllers();
 

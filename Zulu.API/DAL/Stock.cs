@@ -69,7 +69,7 @@ namespace Zulu.API.DAL
                 NroComprobanteSucursal = _dataPtoFacturacion.pfac_prefijo_comprobante,
                 NroComprobante = _nroComprobante,
                 Domicilio = "",
-                FechaComprobante = DateTime.Now.Date, 
+                FechaComprobante = DateTime.Today, 
                 Id_TipoComprobante = _id_TipoComprobante,
                 id_persona = 0,
                 id_Sucursal=0,
@@ -139,6 +139,7 @@ namespace Zulu.API.DAL
                 var _movimStk= this.GetModelMovimientoStock(itemDetalle, _item);
 
                 _compDetalle.id = _idComprobanteDetalle;
+                _compDetalle.cpri_id = 5;
                 _ajusteStk.COMPROBANTESDETALLES.Add(_compDetalle);
                 _ajusteStk.MOVIMIENTOSTOCK.Add(_movimStk);
 
@@ -149,7 +150,7 @@ namespace Zulu.API.DAL
             return _ajusteStk;
         }
 
-        private Models.COMPROBANTESDETALLES GetModelComprobanteDetalle(DetailAjusteStock detail, int renglonID, int Prefijo, ITEMS item)
+       private Models.COMPROBANTESDETALLES GetModelComprobanteDetalle(DetailAjusteStock detail, int renglonID, int Prefijo, ITEMS item)
         {
 
             var _compDetalle = new Models.COMPROBANTESDETALLES

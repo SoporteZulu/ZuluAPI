@@ -12,6 +12,6 @@ namespace Zulu.API
         public int FN_pfac_id { get; set; }  
         public string Observaciones{ get; set; }
         public List<DetailAjusteStock> Detalle{ get; set; }
-
+        public string Key { get; set; }
     }
 }

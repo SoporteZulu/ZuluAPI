@@ -9,6 +9,12 @@ namespace Zulu.API.DAL
 {
     public class Stock
     {
+        private readonly ZuluContext  _context;
+
+        public Stock(ZuluContext context)
+        {
+            _context = context;
+        }
 
         public void Ajustar(List<AjusteStock> ajuste)
         {
@@ -21,10 +27,10 @@ namespace Zulu.API.DAL
                 _lstAjuste.Add(mod);
             }
 
-            using (var context = new ZuluContext())
+            //using (var context = new ZuluContext())
             {
-                context.COMPROBANTES.AddRange(_lstAjuste);
-                context.SaveChanges();
+                _context.COMPROBANTES.AddRange(_lstAjuste);
+                _context.SaveChanges();
             }
 
         }
@@ -32,10 +38,10 @@ namespace Zulu.API.DAL
         private RecordDataFacturacion GetDataPuntoFacturacion(int pfac_id)
         {
 
-            using (var context = new ZuluContext())
+            //using (var context = new ZuluContext())
             {
 
-                var _retorno = context.SUC_PUNTOFACTURACION
+                var _retorno = _context.SUC_PUNTOFACTURACION
                                         .Where(p => p.pfac_id == pfac_id)
                                         .Select(p => new {p.id_sucursal,
                                                           p.pfac_prefijo_comprobante})
@@ -49,9 +55,9 @@ namespace Zulu.API.DAL
         public Models.ITEMS GetItem(string codigoitem)
         {
          
-            using (var context = new ZuluContext())
+            //using (var context = new ZuluContext())
             {
-                return context.ITEMS
+                return _context.ITEMS
                        .Where(p => p.codigo == codigoitem)
                        .FirstOrDefault();
             }
@@ -61,8 +67,8 @@ namespace Zulu.API.DAL
         {
             var _id_TipoComprobante = 78;
             var _dataPtoFacturacion= this.GetDataPuntoFacturacion(stock.FN_pfac_id);
-            var _idComprobante= new DAL.UtilsDB().GenerarId("COMPROBANTES");
-            var _nroComprobante = new DAL.UtilsDB().GenerarNroComprobante(stock.FN_pfac_id , _id_TipoComprobante );
+            var _idComprobante= new DAL.UtilsDB(_context).GenerarId("COMPROBANTES");
+            var _nroComprobante = new DAL.UtilsDB(_context).GenerarNroComprobante(stock.FN_pfac_id , _id_TipoComprobante );
 
             var _ajusteStk = new Models.COMPROBANTES
             {
@@ -135,7 +141,7 @@ namespace Zulu.API.DAL
                 var _item = this.GetItem(itemDetalle.codigoItem);
 
                 var _compDetalle = GetModelComprobanteDetalle(itemDetalle, _renglon, _dataPtoFacturacion.id_sucursal, _item);
-                var _idComprobanteDetalle = new DAL.UtilsDB().GenerarId("COMPROBANTESDETALLES");
+                var _idComprobanteDetalle = new DAL.UtilsDB(_context).GenerarId("COMPROBANTESDETALLES");
                 var _movimStk= this.GetModelMovimientoStock(itemDetalle, _item);
 
                 _compDetalle.id = _idComprobanteDetalle;

@@ -25,9 +25,9 @@ namespace Zulu.API.Controllers
             {
                 _logger.LogInformation("GetToken");
 
-                var t = new DAL.Stock().GetItem("2234");
+             //   var t = new DAL.Stock().GetItem("2234");
 
-                return Ok(t);
+                return Ok();
 
             }
             catch (Exception)

@@ -6,9 +6,9 @@ namespace Zulu.API.Models;
 
 public partial class ZuluContext : DbContext
 {
-    public ZuluContext()
-    {
-    }
+    //public ZuluContext()
+    //{
+    //}
 
     public ZuluContext(DbContextOptions<ZuluContext> options)
         : base(options)
@@ -28,8 +28,10 @@ public partial class ZuluContext : DbContext
     public virtual DbSet<SUC_PUNTOFACTURACION> SUC_PUNTOFACTURACION { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see http://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=201.220.156.232;Database=ZuluERP_Sansatur;User Id=sa;Password=ZuLu2022$.$;Trusted_Connection=false;MultipleActiveResultSets=true;TrustServerCertificate=True;");
+    { 
+    
+    }
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

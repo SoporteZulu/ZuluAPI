@@ -10,13 +10,18 @@ namespace Zulu.API.Controllers
         private readonly ILogger<StockController> _logger;
         private readonly IConfiguration _config;
 
+        private readonly ZuluContext _context;
+
         public StockController(ILogger<StockController> logger,
-                               IConfiguration config)
+                               IConfiguration config,
+                               ZuluContext context)
         {
             _logger = logger;
             _config = config;
+            _context = context;
+
         }
-               
+
 
         [HttpPost()]
         public ActionResult Post(List<AjusteStock> AjusteStock)
@@ -37,7 +42,7 @@ namespace Zulu.API.Controllers
                 }
 
 
-                new DAL.Stock().Ajustar(AjusteStock);
+                new DAL.Stock(_context).Ajustar(AjusteStock);
                 return Ok();
             }
             catch (Exception ex)

@@ -227,7 +227,15 @@ namespace Zulu.API.DAL
 
         }
 
-        private Models.MOVIMIENTOSTOCK GetModelMovimientoStock(DetailAjusteStock detail,ITEMS item)
+        private int GetDepositoByItem(int itemid)
+        {
+            _context.ITEMS.Where(p => p.id == itemid)
+                    .Select(p => p.codigo)
+                    .FirstOrDefault();
+            return 0;
+        }
+
+        private Models.MOVIMIENTOSTOCK GetModelMovimientoStock(DetailAjusteStock detail, ITEMS item)
         {
 
             var _movimStk = new Models.MOVIMIENTOSTOCK
@@ -235,7 +243,7 @@ namespace Zulu.API.DAL
                 id_item = item.id,
                 cantidad = detail.Cantidad,
                 debehaber = 1,
-                id_deposito = 8,
+                id_deposito = GetDepositoByItem(item.id),
                 fecha_alta = DateTime.Now,
                 anulada = null,
                 fecha_anulacion = null,

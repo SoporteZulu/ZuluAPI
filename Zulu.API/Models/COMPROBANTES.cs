@@ -270,6 +270,10 @@ public partial class COMPROBANTES
 
     public string? nroTimbrado { get; set; }
 
+    public decimal? porcentajeAdelanto { get; set; }
+
+    public int? idDeposito { get; set; }
+
     public virtual ICollection<COMPROBANTESDETALLES> COMPROBANTESDETALLES { get; set; } = new List<COMPROBANTESDETALLES>();
 
     public virtual ICollection<COMPROBANTESFORMAPAGOS> COMPROBANTESFORMAPAGOS { get; set; } = new List<COMPROBANTESFORMAPAGOS>();

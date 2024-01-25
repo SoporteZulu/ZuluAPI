@@ -87,6 +87,8 @@ public partial class ITEMS
 
     public int? id_marca { get; set; }
 
+    public int? idDeposito { get; set; }
+
     public virtual ICollection<COMPROBANTESDETALLES> COMPROBANTESDETALLES { get; set; } = new List<COMPROBANTESDETALLES>();
 
     public virtual ICollection<ITEMS> Inverseid_integradoraNavigation { get; set; } = new List<ITEMS>();

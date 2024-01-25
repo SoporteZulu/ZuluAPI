@@ -9,6 +9,12 @@ namespace Zulu.API.DAL
 {
     public class Stock
     {
+        private readonly ZuluContext  _context;
+
+        public Stock(ZuluContext context)
+        {
+            _context = context;
+        }
 
         public void Ajustar(List<AjusteStock> ajuste)
         {
@@ -21,32 +27,37 @@ namespace Zulu.API.DAL
                 _lstAjuste.Add(mod);
             }
 
-            using (var context = new ZuluContext())
+            //using (var context = new ZuluContext())
             {
-                context.COMPROBANTES.AddRange(_lstAjuste);
-                context.SaveChanges();
+                _context.COMPROBANTES.AddRange(_lstAjuste);
+                _context.SaveChanges();
             }
 
         }
 
-        private int GetPrefijoComprobante(int pfac_id)
+        private RecordDataFacturacion GetDataPuntoFacturacion(int pfac_id)
         {
 
-            using (var context = new ZuluContext())
+            //using (var context = new ZuluContext())
             {
-                return context.SUC_PUNTOFACTURACION
+
+                var _retorno = _context.SUC_PUNTOFACTURACION
                                         .Where(p => p.pfac_id == pfac_id)
-                                        .Select(p => p.pfac_prefijo_comprobante)
+                                        .Select(p => new {p.id_sucursal,
+                                                          p.pfac_prefijo_comprobante})
                                         .FirstOrDefault();
+
+                return new RecordDataFacturacion(_retorno.id_sucursal, _retorno.pfac_prefijo_comprobante);
+
             }
         }
 
         public Models.ITEMS GetItem(string codigoitem)
         {
          
-            using (var context = new ZuluContext())
+            //using (var context = new ZuluContext())
             {
-                return context.ITEMS
+                return _context.ITEMS
                        .Where(p => p.codigo == codigoitem)
                        .FirstOrDefault();
             }
@@ -54,14 +65,25 @@ namespace Zulu.API.DAL
 
         private Models.COMPROBANTES GetModelComprobante(AjusteStock stock)
         {
-            var _prefijo = this.GetPrefijoComprobante(stock.FN_pfac_id);
-            var _idComprobante= new DAL.UtilsDB().GenerarId("COMPROBANTES");
+            var _id_TipoComprobante = 78;
+            var _dataPtoFacturacion= this.GetDataPuntoFacturacion(stock.FN_pfac_id);
+            var _idComprobante= new DAL.UtilsDB(_context).GenerarId("COMPROBANTES");
+            var _nroComprobante = new DAL.UtilsDB(_context).GenerarNroComprobante(stock.FN_pfac_id , _id_TipoComprobante );
+
             var _ajusteStk = new Models.COMPROBANTES
             {
-                NroComprobanteSucursal = 0,
+                NroComprobanteSucursal = _dataPtoFacturacion.pfac_prefijo_comprobante,
+                NroComprobante = _nroComprobante,
                 Domicilio = "",
-                Id_TipoComprobante = 78,
+                FechaComprobante = DateTime.Today, 
+                Id_TipoComprobante = _id_TipoComprobante,
                 id_persona = 0,
+                id_Sucursal=0,
+                id_asientocontable=null,
+                id_planCuentas = null,
+                LegajoSucursal = "0",
+                cmp_codigobarras = null,
+                id_localidad = null,
                 RazonSocial = "",
                 CondicionIVA = 0,
                 CUIT_CUIL = "",
@@ -95,10 +117,8 @@ namespace Zulu.API.DAL
                 Impuesto2 = 0,
                 Impuesto3 = 0,
                 Estado = 0,
-                Observacion = "",
-                Fecha_alta = DateTime.Now,
-                id_asientocontable = 0,
-                id_planCuentas = 0,
+                Observacion = "Movimiento de stock automatico de planta de producción a deposito " + 
+                           DateTime.Now.ToString("dd/MM/yyyy HH:mm"),
                 SaleLibroIVA = 0,
                 Habilitada = 0,
                 ObservacionHabilitacion = "",
@@ -109,7 +129,7 @@ namespace Zulu.API.DAL
 
             _ajusteStk.id = _idComprobante;
             _ajusteStk.FechaComprobante = stock.FechaComprobante;
-            _ajusteStk.Prefijo = _prefijo;
+            _ajusteStk.Prefijo = _dataPtoFacturacion.id_sucursal;
             _ajusteStk.id_usuario = stock.idUsuario;
             _ajusteStk.pfac_id = stock.FN_pfac_id;
 
@@ -120,8 +140,8 @@ namespace Zulu.API.DAL
             {
                 var _item = this.GetItem(itemDetalle.codigoItem);
 
-                var _compDetalle = GetModelComprobanteDetalle(itemDetalle, _renglon, _prefijo, _item);
-                var _idComprobanteDetalle = new DAL.UtilsDB().GenerarId("COMPROBANTESDETALLES");
+                var _compDetalle = GetModelComprobanteDetalle(itemDetalle, _renglon, _dataPtoFacturacion.id_sucursal, _item);
+                var _idComprobanteDetalle = new DAL.UtilsDB(_context).GenerarId("COMPROBANTESDETALLES");
                 var _movimStk= this.GetModelMovimientoStock(itemDetalle, _item);
 
                 _compDetalle.id = _idComprobanteDetalle;
@@ -136,7 +156,7 @@ namespace Zulu.API.DAL
             return _ajusteStk;
         }
 
-        private Models.COMPROBANTESDETALLES GetModelComprobanteDetalle(DetailAjusteStock detail, int renglonID, int Prefijo, ITEMS item)
+       private Models.COMPROBANTESDETALLES GetModelComprobanteDetalle(DetailAjusteStock detail, int renglonID, int Prefijo, ITEMS item)
         {
 
             var _compDetalle = new Models.COMPROBANTESDETALLES
@@ -207,7 +227,15 @@ namespace Zulu.API.DAL
 
         }
 
-        private Models.MOVIMIENTOSTOCK GetModelMovimientoStock(DetailAjusteStock detail,ITEMS item)
+        private int GetDepositoByItem(int itemid)
+        {
+            _context.ITEMS.Where(p => p.id == itemid)
+                    .Select(p => p.codigo)
+                    .FirstOrDefault();
+            return 0;
+        }
+
+        private Models.MOVIMIENTOSTOCK GetModelMovimientoStock(DetailAjusteStock detail, ITEMS item)
         {
 
             var _movimStk = new Models.MOVIMIENTOSTOCK
@@ -215,7 +243,7 @@ namespace Zulu.API.DAL
                 id_item = item.id,
                 cantidad = detail.Cantidad,
                 debehaber = 1,
-                id_deposito = 8,
+                id_deposito = GetDepositoByItem(item.id),
                 fecha_alta = DateTime.Now,
                 anulada = null,
                 fecha_anulacion = null,
@@ -252,5 +280,18 @@ namespace Zulu.API.DAL
 
         }
 
+    }
+
+    internal record struct RecordDataFacturacion(int id_sucursal, int pfac_prefijo_comprobante)
+    {
+        public static implicit operator (int id_sucursal, int pfac_prefijo_comprobante)(RecordDataFacturacion value)
+        {
+            return (value.id_sucursal, value.pfac_prefijo_comprobante);
+        }
+
+        public static implicit operator RecordDataFacturacion((int id_sucursal, int pfac_prefijo_comprobante) value)
+        {
+            return new RecordDataFacturacion(value.id_sucursal, value.pfac_prefijo_comprobante);
+        }
     }
 }

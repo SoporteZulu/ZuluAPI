@@ -230,7 +230,7 @@ namespace Zulu.API.DAL
         private int GetDepositoByItem(int itemid)
         {
             _context.ITEMS.Where(p => p.id == itemid)
-                    .Select(p => p.codigo)
+                    .Select(p => p.idDeposito)
                     .FirstOrDefault();
             return 0;
         }

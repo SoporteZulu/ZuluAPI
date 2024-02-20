@@ -7,6 +7,9 @@ namespace Zulu.API
             Detalle= new List<DetailAjusteStock>();
         }
 
+        public int TipoAjuste{ get; set; }
+        public string CodigoItemHeadID{ get; set; }
+
         public DateTime FechaComprobante { get; set; }
         public int idUsuario { get; set; }
         public int FN_pfac_id { get; set; }  

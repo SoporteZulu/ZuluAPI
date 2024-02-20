@@ -28,8 +28,7 @@ namespace Zulu.API.Controllers
         {
             try
             {
-                string key = "5a2b2e4c-e683-482f-9abf-e0de126ebc79";
-
+                string key = _config["AppSettings:Secret"];
 
                 if (AjusteStock == null)
                     return BadRequest();    
@@ -42,7 +41,7 @@ namespace Zulu.API.Controllers
                 }
 
 
-                new DAL.Stock(_context).Ajustar(AjusteStock);
+                new DAL.Stock(_context, _config).Ajustar(AjusteStock);
                 return Ok();
             }
             catch (Exception ex)

@@ -1,19 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using Zulu.API;
-using Zulu.API.Models;
+﻿using Zulu.API.Models;
 
 namespace Zulu.API.DAL
 {
     public class Stock
     {
         private readonly ZuluContext  _context;
+        private readonly IConfiguration _config;
 
-        public Stock(ZuluContext context)
+        public Stock(ZuluContext context,
+                      IConfiguration configuration)
         {
             _context = context;
+            _config = configuration;
         }
 
         public void Ajustar(List<AjusteStock> ajuste)
@@ -27,19 +25,14 @@ namespace Zulu.API.DAL
                 _lstAjuste.Add(mod);
             }
 
-            //using (var context = new ZuluContext())
-            {
                 _context.COMPROBANTES.AddRange(_lstAjuste);
                 _context.SaveChanges();
-            }
 
         }
 
         private RecordDataFacturacion GetDataPuntoFacturacion(int pfac_id)
         {
 
-            //using (var context = new ZuluContext())
-            {
 
                 var _retorno = _context.SUC_PUNTOFACTURACION
                                         .Where(p => p.pfac_id == pfac_id)
@@ -49,23 +42,22 @@ namespace Zulu.API.DAL
 
                 return new RecordDataFacturacion(_retorno.id_sucursal, _retorno.pfac_prefijo_comprobante);
 
-            }
         }
 
         public Models.ITEMS GetItem(string codigoitem)
         {
-         
-            //using (var context = new ZuluContext())
-            {
-                return _context.ITEMS
+            return _context.ITEMS
                        .Where(p => p.codigo == codigoitem)
                        .FirstOrDefault();
-            }
         }
 
         private Models.COMPROBANTES GetModelComprobante(AjusteStock stock)
         {
-            var _id_TipoComprobante = 78;
+
+            var _tipo= stock.TipoAjuste==1 ? "POSITIVO" : "NEGATIVO";
+
+            var _id_TipoComprobante = Convert.ToInt32(_config[$"AppSettings:id_TipoComprobante_{_tipo}"]); 
+
             var _dataPtoFacturacion= this.GetDataPuntoFacturacion(stock.FN_pfac_id);
             var _idComprobante= new DAL.UtilsDB(_context).GenerarId("COMPROBANTES");
             var _nroComprobante = new DAL.UtilsDB(_context).GenerarNroComprobante(stock.FN_pfac_id , _id_TipoComprobante );
@@ -98,7 +90,7 @@ namespace Zulu.API.DAL
                 NetoGravado = 0,
                 NetoNoGravado = 0,
                 TotalComprobante = 0,
-                DebeHaber = 1,
+                DebeHaber = stock.TipoAjuste, //  1 si suma -1 si resta
                 id_moneda = 1,
                 cotizacion = 1,
                 NroCompIngBrutos = "",
@@ -133,16 +125,16 @@ namespace Zulu.API.DAL
             _ajusteStk.id_usuario = stock.idUsuario;
             _ajusteStk.pfac_id = stock.FN_pfac_id;
 
-            /*ver si hay que validar que el prefijo sea nulo?*/
+            int Cod_DepositoID=0; // obtengo el deposito default del setting segun flag
 
             var _renglon = 1;
             foreach (var itemDetalle in stock.Detalle)
             {
-                var _item = this.GetItem(itemDetalle.codigoItem);
+                var _item = this.GetItem(itemDetalle.codigoItemDetail);
 
                 var _compDetalle = GetModelComprobanteDetalle(itemDetalle, _renglon, _dataPtoFacturacion.id_sucursal, _item);
                 var _idComprobanteDetalle = new DAL.UtilsDB(_context).GenerarId("COMPROBANTESDETALLES");
-                var _movimStk= this.GetModelMovimientoStock(itemDetalle, _item);
+                var _movimStk= this.GetModelMovimientoStock(itemDetalle, _item, stock.CodigoItemHeadID, stock.TipoAjuste);
 
                 _compDetalle.id = _idComprobanteDetalle;
                 _compDetalle.cpri_id = 5;
@@ -227,15 +219,38 @@ namespace Zulu.API.DAL
 
         }
 
-        private int GetDepositoByItem(int itemid)
+        private int GetDepositoByItem(int itemid, int TipoAjuste, string CodItemHead)
         {
-            _context.ITEMS.Where(p => p.id == itemid)
-                    .Select(p => p.codigo)
+            if (TipoAjuste == 1) /// positivo
+            {
+                var _cod = _context.ITEMS.Where(p => p.id == itemid)
+                        .Select(p => p.idDeposito)
+                        .FirstOrDefault();
+
+                if (_cod != null)
+                    return (int)_cod;
+                else
+                   return Convert.ToInt32(_config[$"AppSettings:id_Deposito_POSITIVO"]);
+            }
+            else
+            {
+                /* AQUI ESTOY EN NEGATIVO*/
+                var _item = this.GetItem(CodItemHead);
+                
+                var _cod = _context.ITEMS.Where(p => p.id == _item.id)
+                    .Select(p => p.idDeposito)
                     .FirstOrDefault();
+
+                if (_cod != null)
+                    return (int)_cod;
+                else
+                    return Convert.ToInt32(_config[$"AppSettings:id_Deposito_NEGATIVO"]);
+            }
+
             return 0;
         }
 
-        private Models.MOVIMIENTOSTOCK GetModelMovimientoStock(DetailAjusteStock detail, ITEMS item)
+        private Models.MOVIMIENTOSTOCK GetModelMovimientoStock(DetailAjusteStock detail, ITEMS item, string CodItemHead, int TipoAjuste)
         {
 
             var _movimStk = new Models.MOVIMIENTOSTOCK
@@ -243,7 +258,7 @@ namespace Zulu.API.DAL
                 id_item = item.id,
                 cantidad = detail.Cantidad,
                 debehaber = 1,
-                id_deposito = GetDepositoByItem(item.id),
+                id_deposito = GetDepositoByItem(item.id, TipoAjuste,CodItemHead),
                 fecha_alta = DateTime.Now,
                 anulada = null,
                 fecha_anulacion = null,
